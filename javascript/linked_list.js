@@ -65,8 +65,10 @@ class LinkedList {
     node.next = this.head;
     this.head = node;
     this.setSize()
+    // could probably just do this.size += 1
     if(startedEmpty){
       this.setTail()
+      // alt: this.tail = node
     }
   }
 
@@ -87,8 +89,13 @@ class LinkedList {
         }
       })
     }
+    // alternative:
+      // this.tail.next = node
+      // this.tail = node
     this.setTail()
+    // could probably do this.tail = node
     this.setSize()
+    // could probably do this.size += 1
   }
 
   // remove the first Node in the list and update head
