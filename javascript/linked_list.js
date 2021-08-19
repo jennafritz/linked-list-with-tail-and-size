@@ -1,24 +1,44 @@
 class LinkedList {
-  constructor(head = null) {
+  constructor(head = null, tail = null) {
     this.head = head;
+    this.tail = this.setTail() || tail
+    this.size = this.setSize()
   }
 
   iterate(callback) {
-    let count = 0;
-    let temp = this.head;
-
-    while (temp !== null) {
-      const result = callback(temp, count);
-
-      if (result === true) {
-        return temp;
+    let node = this.head
+    if(!!this.head){
+      while(!!node && !!node.next){
+        callback(node)
+        node = node.next
       }
-
-      ++count;
-      temp = temp.next;
+      callback(node)
+      return this.head
     }
+  }
 
-    return this.head;
+  setTail() {
+    let node = this.head
+    if(!!this.head){
+      if(this.head.next !== null){
+        while(!!node.next){
+          node = node.next
+        }
+        this.tail = node
+      } else {
+        this.tail = this.head
+      }
+    } else {
+      this.tail = null
+    }
+    return this.tail
+  }
+
+  setSize() {
+    let count = 0
+    this.iterate(node => count+= 1)
+    this.size = count
+    return this.size
   }
 
   // print each node's value on its own line
@@ -30,71 +50,95 @@ class LinkedList {
   // find the node with the target value and return it
   // if not found return null, use your iterate method to be DRY!
   find(target) {
-    let result = null;
-
-    this.iterate(node => {
-      if (node.value === target) {
-        result = node;
-
-        return true;
+    let result = null
+    this.iterate((node) => {
+      if(node.value === target){
+        result = node
       }
-    });
-
-    return result;
+    })
+    return result
   }
 
   // add the node to the start of the list, no nodes should be removed
   addFirst(node) {
+    let startedEmpty = this.isEmpty()
     node.next = this.head;
     this.head = node;
+    this.setSize()
+    if(startedEmpty){
+      this.setTail()
+    }
   }
+
+  isEmpty() {
+    return !this.head
+  }
+
 
   // add node to end of list, no nodes should be removed
   // you may wish to use the iterate method
   addLast(node) {
-    if (this.head === null) {
-      this.head = node;
-      return;
+    if(this.isEmpty()){
+      this.head = node
+    } else {
+      this.iterate(existingNode => {
+        if(existingNode.next === null){
+          existingNode.next = node
+        }
+      })
     }
-
-    this.iterate(currNode => {
-      if (currNode.next === null) {
-        currNode.next = node;
-        return true;
-      }
-    });
+    this.setTail()
+    this.setSize()
   }
 
   // remove the first Node in the list and update head
   // and return the removed node
   removeFirst() {
-    const oldHead = this.head;
-
-    if (this.head !== null) {
-      this.head = this.head.next;
+    let removed = null
+    if(!this.isEmpty()){
+      removed = this.head
+      if(!!this.head.next){
+        this.head = this.head.next
+      } else {
+        this.head = null
+      }
     }
-
-    return oldHead;
+    this.setTail()
+    this.setSize()
+    return removed
   }
+
 
   // remove the tail node, iterate may be helpful
   // return the node you just removed
   removeLast() {
-    if (this.head === null || this.head.next === null) {
-      return this.removeFirst();
+    if(this.head === null || this.head.next === null){
+      return this.removeFirst()
     }
-
-    let oldTail = null;
-
+    let removed
     this.iterate(node => {
-      if (node.next.next === null) {
-        oldTail = node.next;
-        node.next = null;
-        return true;
+      if(!!node && node.next !== null){
+        if(node.next.next === null){
+          removed = node.next
+          node.next = null
+        }
       }
-    });
+    })
+    this.setTail()
+    this.setSize()
+    return removed
+  }
 
-    return oldTail;
+  returnPrecedingNode(idx) {
+    let count = 1
+    let currentNode = this.head
+    while(count < idx){
+      if(!!currentNode.next){
+        currentNode = currentNode.next
+        count++
+      }
+    }
+    return currentNode
   }
 
   // replace the node at the given index with the given node
@@ -102,19 +146,13 @@ class LinkedList {
     if (idx === 0) {
       this.removeFirst();
       this.addFirst(node);
-      return node;
+    } else {
+      let precedingNode = this.returnPrecedingNode(idx)
+      node.next = precedingNode.next.next
+      precedingNode.next = node
     }
-
-    this.iterate((currNode, count) => {
-      if (count === idx - 1) {
-        node.next = currNode.next.next;
-        currNode.next = node;
-
-        return true;
-      }
-    });
-
-    return node;
+    this.setTail()
+    return node
   }
 
   // insert the node at the given index
@@ -122,44 +160,43 @@ class LinkedList {
   insert(idx, node) {
     if (idx === 0) {
       this.addFirst(node);
-      return;
+    } else {
+      let precedingNode = this.returnPrecedingNode(idx)
+      node.next = precedingNode.next
+      precedingNode.next = node
     }
-
-    this.iterate((currNode, count) => {
-      if (count === idx - 1) {
-        const oldNext = currNode.next;
-        currNode.next = node;
-        node.next = oldNext;
-
-        return true;
-      }
-    });
+    this.setTail()
+    this.setSize()
   }
 
   // remove the node at the given index, and return it
   remove(idx) {
+    let removed
     if (idx === 0) {
       return this.removeFirst();
-    }
-
-    let oldNode = null;
-
-    this.iterate((node, count) => {
-      if (count === idx - 1) {
-        oldNode = node.next;
-        node.next = node.next.next;
-
-        return true;
+    } else {
+      let precedingNode = this.returnPrecedingNode(idx)
+      removed = precedingNode.next
+      if(precedingNode.next === null){
+        this.removeLast()
+      } else {
+        precedingNode.next = precedingNode.next.next
       }
-    }); 
-
-    return oldNode;
+    }
+    this.setTail()
+    this.setSize()
+    removed.next = null
+    return removed
   }
 
   clear() {
     this.head = null;
+    this.tail = null
+    this.setSize()
   }
 }
+
+
 
 class Node {
   constructor(value = null, next = null) {
